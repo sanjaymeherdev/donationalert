@@ -1,6 +1,9 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-   if (req.body?.password !== process.env.TEST_PASSWORD) {
+
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+  if (body?.password !== process.env.TEST_PASSWORD) {
     return res.status(401).json({ error: 'Wrong password' });
   }
   const username = body.username ?? 'Sanjay Meher';
