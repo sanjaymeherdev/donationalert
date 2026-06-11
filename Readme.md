@@ -139,6 +139,13 @@ Open the overlay URL in a browser, open DevTools console and fire a test tip. Th
 ```js
 console.log('SE event:', JSON.stringify(obj.detail));
 ```
+## Test Console Command
+fetch('/api/test-se', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ password: 'your-password-here' })
+}).then(r => r.json()).then(console.log)
+
 
 Common failure reasons:
 - `listener !== 'tip-latest'` — wrong listener string, check console log
