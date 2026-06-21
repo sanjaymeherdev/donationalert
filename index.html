@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>StreamTip · Live + Tips</title>
@@ -591,6 +592,13 @@
         <button class="load-btn" onclick="loadYT()">Load</button>
       </div>
 
+      <!-- StreamElements Chat URL bar -->
+      <div class="url-bar">
+        <i class="ti ti-message-chat"></i>
+        <input type="text" id="seUrlInput" placeholder="StreamElements overlay URL (optional)">
+        <button class="load-btn" onclick="loadSE()">Load Chat</button>
+      </div>
+
       <!-- Tip banner -->
       <div class="tip-banner" id="tip-banner">
         <div class="tip-av" id="tip-av">SJ</div>
@@ -627,11 +635,11 @@
             <div class="fld">
               <label class="fld-label">Tip Amount (₹)</label>
               <div class="amt-grid">
+                <button class="amt-chip" onclick="pickAmt(10,this)">₹10</button>
+                <button class="amt-chip" onclick="pickAmt(29,this)">₹29</button>
                 <button class="amt-chip" onclick="pickAmt(49,this)">₹49</button>
-                <button class="amt-chip" onclick="pickAmt(99,this)">₹99</button>
-                <button class="amt-chip" onclick="pickAmt(199,this)">₹199</button>
-                <button class="amt-chip" onclick="pickAmt(499,this)">₹499</button>
-                <button class="amt-chip" onclick="pickAmt(999,this)">₹999</button>
+                <button class="amt-chip" onclick="pickAmt(100,this)">₹100</button>
+                <button class="amt-chip" onclick="pickAmt(200,this)">₹200</button>
                 <button class="amt-chip" onclick="pickAmt(0,this)">custom</button>
               </div>
               <input type="number" id="f-amount" placeholder="or enter custom amount" min="1" style="margin-top:2px;">
@@ -656,10 +664,18 @@
 
           <!-- Step 3: Payment -->
           <div class="step-panel" id="step3">
+            <div class="fld">
+              <label class="fld-label">Select Payment Method</label>
+              <select id="payment-method" onchange="updatePaymentUI()" style="width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;color:var(--text);font-size:12px;font-family:var(--font-mono);outline:none;transition:.15s;">
+                <option value="cashfree">Cashfree</option>
+                <option value="razorpay">Razorpay</option>
+                <option value="paypal">PayPal</option>
+              </select>
+            </div>
             <div class="pay-gate">
-              <div class="pay-title">Cashfree Secure Payment</div>
+              <div class="pay-title" id="pay-provider-title">Cashfree Secure Payment</div>
               <div class="pay-amt" id="pay-amt">₹0</div>
-              <div class="pay-methods">
+              <div class="pay-methods" id="pay-methods-display">
                 <span class="pm">UPI</span>
                 <span class="pm">Cards</span>
                 <span class="pm">NetBanking</span>
@@ -700,7 +716,7 @@
         <div class="sidebar-hdr-title"><i class="ti ti-message-chat"></i> Live Chat</div>
         <div style="font-size:9px;color:var(--text3);">StreamElements</div>
       </div>
-      <div class="se-iframe-wrap">
+      <div class="se-iframe-wrap" id="seChatWrap">
         <iframe id="seChatIframe"
                 src="about:blank"
                 title="StreamElements Chat Overlay"
@@ -708,28 +724,47 @@
                 sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals">
         </iframe>
       </div>
-      <div class="recent-tips">
-        <div class="rt-hdr">🏆 Top Tips</div>
-        <div id="rt-list">
-          <div class="rt-item"><span class="rt-name">rahul_d</span><span class="rt-val">₹999</span></div>
-          <div class="rt-item"><span class="rt-name">sneha_k</span><span class="rt-val">₹499</span></div>
-        </div>
+     
       </div>
-      <div class="sidebar-note"><i class="ti ti-info-circle"></i> Configure SE_CHAT_URL env variable to load your chat</div>
+      
     </div>
   </div>
 </div>
+<footer style="background:#222;color:#fff;padding:20px;text-align:center;margin-top:40px;">
+    <p style="margin:0 0 10px 0;">&copy; 2026 Krinzy_donation. All Rights Reserved.</p>
 
+    <div>
+        <a href="contact.html"
+           style="color:#ffffff;text-decoration:none;margin:0 15px;">
+           Contact Us
+        </a>
+
+        <a href="refund.html"
+           style="color:#ffffff;text-decoration:none;margin:0 15px;">
+           Refunds & Cancellations
+        </a>
+
+        <a href="terms.html"
+           style="color:#ffffff;text-decoration:none;margin:0 15px;">
+           Terms & Conditions
+        </a>
+    </div>
+</footer>
 <script>
   // ==========================================
   // ENV CONFIG — only edit these
   // SE overlay URL is NOT shown in the UI
   // ==========================================
+  // ENV values are injected by Vercel at build time via environment variables.
+  // Set DEFAULT_YOUTUBE_URL and SE_CHAT_URL in your Vercel project settings.
   const ENV = {
-    DEFAULT_YOUTUBE_URL: 'https://www.youtube.com/watch?v=WWMYmxo45AM',
-    SE_CHAT_URL: '',  // Set your StreamElements overlay URL here — hidden from UI
+    DEFAULT_YOUTUBE_URL: '{{DEFAULT_YOUTUBE_URL}}',
+    SE_CHAT_URL: '{{SE_CHAT_URL}}',
     DONATION_ENDPOINT: 'https://bvavtdyxuzzabzgodbjw.supabase.co/functions/v1/donation'
   };
+  // Vercel replaces {{VAR}} at build time; fall back to empty string if not set
+  if (ENV.DEFAULT_YOUTUBE_URL === '{{DEFAULT_YOUTUBE_URL}}') ENV.DEFAULT_YOUTUBE_URL = '';
+  if (ENV.SE_CHAT_URL === '{{SE_CHAT_URL}}') ENV.SE_CHAT_URL = '';
 
   // ==========================================
   // YOUTUBE: robust embed with fallback
@@ -804,16 +839,53 @@
   });
 
   function loadTestVideo() {
-    loadYT('https://www.youtube.com/watch?v=jNQXAC9IVRw');
+    loadYT('');
   }
 
   // ==========================================
-  // STREAMELEMENTS — env-only, no UI input
+  // STREAMELEMENTS — env-only + UI input
   // ==========================================
+  const SE_CHAT_HARDCODED = 'https://streamelements.com/overlay/6a2f903bf2ed77a9eab2af9e/-CfHBVXo37hUWEw8eZZ4MvlfzFtAeHOsfQgZjJWigVHG9XSI';
+
   function initSEChat() {
-    if (ENV.SE_CHAT_URL && !ENV.SE_CHAT_URL.includes('YOUR_CHANNEL')) {
-      document.getElementById('seChatIframe').src = ENV.SE_CHAT_URL;
+    const url = SE_CHAT_HARDCODED;
+    const iframe = document.getElementById('seChatIframe');
+    const wrap = document.getElementById('seChatWrap'); // Add this ID to your HTML
+    
+    iframe.src = url;
+    
+    function fitChat() {
+        const W = wrap.offsetWidth;
+        const H = wrap.offsetHeight;
+        if (!W || !H) return;
+        
+        const NATIVE_W = 1920;
+        const scale = W / NATIVE_W;
+        
+        iframe.style.width = NATIVE_W + 'px';
+        iframe.style.height = Math.round(H / scale) + 'px';
+        iframe.style.transform = `scale(${scale})`;
+        iframe.style.transformOrigin = 'top left';
     }
+    
+    fitChat();
+    window.addEventListener('resize', fitChat);
+    iframe.addEventListener('load', () => setTimeout(fitChat, 200));
+}
+
+  function loadSE() {
+    const url = document.getElementById('seUrlInput').value.trim();
+    if (!url) return;
+    document.getElementById('seChatIframe').src = url;
+    scrollToSEChat();
+  }
+
+  function scrollToSEChat() {
+    const target = document.getElementById('seChatIframe');
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    if (!inView) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   // ==========================================
@@ -855,6 +927,10 @@
       document.getElementById('r-msg').innerText  = state.msg || '(no message)';
       document.getElementById('pay-amt').innerText = '₹' + Math.round(amt);
     }
+    if (n === 3) {
+      // Update payment provider UI when entering step 3
+      updatePaymentUI();
+    }
     curStep = n;
     for (let i = 1; i <= 4; i++) {
       document.getElementById('step' + i).classList.toggle('vis', i === n);
@@ -865,43 +941,45 @@
     }
   }
 
+  function updatePaymentUI() {
+    const provider = document.getElementById('payment-method').value;
+    const titleEl = document.getElementById('pay-provider-title');
+    const methodsEl = document.getElementById('pay-methods-display');
+    
+    if (provider === 'razorpay') {
+      titleEl.textContent = 'Razorpay Secure Payment';
+      methodsEl.innerHTML = '<span class="pm">UPI</span><span class="pm">Cards</span><span class="pm">NetBanking</span><span class="pm">Wallets</span>';
+    } else if (provider === 'paypal') {
+      titleEl.textContent = 'PayPal Payment';
+      methodsEl.innerHTML = '<span class="pm">PayPal Account</span><span class="pm">Credit Card</span><span class="pm">Debit Card</span>';
+    } else {
+      titleEl.textContent = 'Cashfree Secure Payment';
+      methodsEl.innerHTML = '<span class="pm">UPI</span><span class="pm">Cards</span><span class="pm">NetBanking</span><span class="pm">Wallets</span>';
+    }
+  }
+
   async function doPay() {
   const btn  = document.getElementById('pay-btn');
   const txt  = document.getElementById('pay-txt');
   const spin = document.getElementById('pay-spin');
+  const provider = document.getElementById('payment-method').value;
 
   btn.disabled = true;
   txt.textContent = 'Processing…';
   spin.style.display = 'block';
 
   try {
-    // Step 1: Create order
-    const res = await fetch('/api/create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name:    state.name,
-        email:   state.email,
-        amount:  state.amount,
-        message: state.msg
-      })
-    });
-
-    const data = await res.json();
-    console.log('Order response:', data); // ← check this in browser console
-
-    if (!res.ok || !data.payment_session_id) {
-      alert('Error: ' + (data.error || data.cf_response?.message || 'No session ID returned'));
+    // Handle different payment providers
+    if (provider === 'razorpay') {
+      await handleRazorpay();
+      return;
+    } else if (provider === 'paypal') {
+      await handlePaypal();
+      return;
+    } else if (provider === 'cashfree') {
+      await handleCashfree();
       return;
     }
-
-    // Step 2: Open Cashfree checkout
-    const cashfree = Cashfree({ mode: 'sandbox' }); // ✅ must match your keys
-    await cashfree.checkout({
-      paymentSessionId: data.payment_session_id,  // ✅ exact field name
-      returnUrl: window.location.origin + '/thankyou?order_id=' + data.order_id,
-    });
-
   } catch (err) {
     console.error(err);
     alert('Error: ' + err.message);
@@ -910,6 +988,109 @@
     btn.disabled = false;
     txt.textContent = 'Pay Now';
   }
+}
+
+async function handleCashfree() {
+  // Step 1: Create order
+  const res = await fetch('/api/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name:    state.name,
+      email:   state.email,
+      amount:  state.amount,
+      message: state.msg
+    })
+  });
+
+  const data = await res.json();
+  console.log('Order response:', data);
+
+  if (!res.ok || !data.payment_session_id) {
+    alert('Error: ' + (data.error || data.cf_response?.message || 'No session ID returned'));
+    return;
+  }
+
+  // Step 2: Open Cashfree checkout
+  const cashfree = Cashfree({
+    mode: 'production'
+  });
+
+  await cashfree.checkout({
+    paymentSessionId: data.payment_session_id,
+    returnUrl: `${window.location.origin}/thankyou?order_id=${data.order_id}`,
+  });
+}
+
+async function handleRazorpay() {
+  // Create Razorpay order
+  const res = await fetch('/api/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name:    state.name,
+      email:   state.email,
+      amount:  state.amount,
+      message: state.msg,
+      provider: 'razorpay'
+    })
+  });
+
+  const data = await res.json();
+  
+  if (!res.ok || !data.razorpay_order_id) {
+    alert('Error: ' + (data.error || 'Failed to create Razorpay order'));
+    return;
+  }
+
+  // Open Razorpay checkout
+  const options = {
+    key: data.razorpay_key_id,
+    amount: Math.round(state.amount * 100),
+    currency: 'INR',
+    name: 'StreamTip',
+    description: 'Tip for streamer',
+    order_id: data.razorpay_order_id,
+    handler: function(response) {
+      // Success callback
+      window.location.href = `/thankyou?order_id=${data.order_id}&payment_id=${response.razorpay_payment_id}`;
+    },
+    prefill: {
+      name: state.name,
+      email: state.email
+    },
+    theme: {
+      color: '#6c63ff'
+    }
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+
+async function handlePaypal() {
+  // Redirect to PayPal or open PayPal popup
+  const res = await fetch('/api/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name:    state.name,
+      email:   state.email,
+      amount:  state.amount,
+      message: state.msg,
+      provider: 'paypal'
+    })
+  });
+
+  const data = await res.json();
+  
+  if (!res.ok || !data.paypal_approval_url) {
+    alert('Error: ' + (data.error || 'Failed to create PayPal payment'));
+    return;
+  }
+
+  // Open PayPal in popup or redirect
+  window.location.href = data.paypal_approval_url;
 }
 
   function showBanner(name, amt) {
