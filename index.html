@@ -667,13 +667,13 @@
             <div class="fld">
               <label class="fld-label">Select Payment Method</label>
               <select id="payment-method" onchange="updatePaymentUI()" style="width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;color:var(--text);font-size:12px;font-family:var(--font-mono);outline:none;transition:.15s;">
-                <option value="cashfree">Cashfree</option>
                 <option value="razorpay">Razorpay</option>
+                <option value="cashfree">Cashfree</option>
                 <option value="paypal">PayPal</option>
               </select>
             </div>
             <div class="pay-gate">
-              <div class="pay-title" id="pay-provider-title">Cashfree Secure Payment</div>
+              <div class="pay-title" id="pay-provider-title">Razorpay Secure Payment</div>
               <div class="pay-amt" id="pay-amt">₹0</div>
               <div class="pay-methods" id="pay-methods-display">
                 <span class="pm">UPI</span>
@@ -999,7 +999,8 @@ async function handleCashfree() {
       name:    state.name,
       email:   state.email,
       amount:  state.amount,
-      message: state.msg
+      message: state.msg,
+      provider: 'cashfree'
     })
   });
 
